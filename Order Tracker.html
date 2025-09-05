@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="https://cdn2.steamgriddb.com/icon/629d026b487e559ff65d476804cbdf65.ico">
+  <title>Order Tracker</title>
+  <style>
+    :root{
+      --bg:#0f172a;--panel:#111827;--muted:#94a3b8;--text:#e5e7eb;--accent:#22d3ee;--accent-2:#38bdf8;
+      --ring:rgba(34,211,238,0.45);--border:#1f2937;--gold:#ffd700;--blue:#3b82f6;--green:#22c55e;
+      --orange:#f97316;--purple:#8b5cf6;--gray:#9ca3af;--tint-gold:rgba(255,215,0,0.12);
+      --tint-blue:rgba(59,130,246,0.12);--tint-green:rgba(34,197,94,0.12);
+      --tint-orange:rgba(249,115,22,0.12);--tint-purple:rgba(139,92,246,0.12);
+      --tint-gray:rgba(156,163,175,0.12);--sticky-offset:56px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body {
+	  margin: 0;
+	  background:
+		url("https://wallpapercave.com/wp/wp5170567.jpg") center/cover no-repeat fixed,
+		radial-gradient(1200px 800px at 80% -10%, rgba(34,211,238,0.08), transparent 60%),
+		radial-gradient(900px 600px at 10% -20%, rgba(56,189,248,0.06), transparent 50%),
+		var(--bg);
+	  color: var(--text);
+	  font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial,
+			"Apple Color Emoji", "Segoe UI Emoji";
+	}
+
+    header{position:sticky;top:0;z-index:10;backdrop-filter:blur(6px);
+      background:linear-gradient(180deg,rgba(15,23,42,0.9),rgba(15,23,42,0.7));
+      border-bottom:1px solid var(--border)}
+    .nav{max-width:1100px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:12px}
+    .brand{font-weight:700;letter-spacing:.3px}
+    .spacer{flex:1}
+    .btn{background:linear-gradient(180deg,rgba(56,189,248,0.18),rgba(34,211,238,0.16));
+      border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;
+      font-weight:600;letter-spacing:.2px}
+    .btn:hover{border-color:var(--accent-2);box-shadow:0 0 0 3px var(--ring) inset}
+    main{max-width:1100px;margin:24px auto;padding:0 20px 60px}
+    .notice{display:inline-block;padding:10px 14px;border-radius:12px;border:1px solid var(--border);
+      background:linear-gradient(180deg,rgba(17,24,39,0.82),rgba(17,24,39,0.7));backdrop-filter:blur(3px);
+      box-shadow:0 8px 24px rgba(0,0,0,0.28);color:var(--text)}
+    .empty{text-align:center;margin:60px auto;color:var(--text)}
+    .location{background:linear-gradient(180deg,rgba(17,24,39,0.85),rgba(17,24,39,0.7));
+      border:1px solid var(--border);border-radius:14px;padding:14px;margin:12px 0 18px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.25);position:relative}
+    .location-sticky{position:sticky;top:var(--sticky-offset);z-index:5;
+      background:linear-gradient(180deg,rgba(17,24,39,0.92),rgba(17,24,39,0.86));
+      border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:8px;
+      backdrop-filter:blur(4px);box-shadow:0 6px 12px rgba(0,0,0,0.15)}
+    .location-sticky .gauge-wrap{margin-top:6px}
+    .location-header{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.05rem}
+    .badge{color:var(--muted);font-weight:600;font-size:.85rem}
+    .location-header .controls{margin-left:auto;display:flex;gap:6px}
+    .gauge-wrap{margin-top:8px}
+    .gauge{height:10px;border:1px solid #374151;background:rgba(148,163,184,0.08);
+      border-radius:999px;overflow:hidden;display:flex}
+    .gauge-seg{height:100%}
+    .seg-S{background:var(--gold)} .seg-A{background:var(--blue)}
+    .seg-B{background:var(--green)} .seg-C{background:var(--orange)}
+    .seg-D{background:var(--purple)} .seg-M{background:var(--gray)} .seg-X{background:#3a455e}
+    .orders{margin-top:10px;border-top:1px dashed var(--border);padding-top:8px}
+    .order-row{display:grid;grid-template-columns:1fr 160px 36px;align-items:center;gap:10px;
+      padding:8px 10px;border-radius:10px;border:1px solid transparent}
+    .order-row+.order-row{margin-top:6px}
+    .order-row:hover{border-color:var(--border);background:rgba(148,163,184,0.06)}
+    .order-row.rank-S{background:var(--tint-gold)} .order-row.rank-A{background:var(--tint-blue)}
+    .order-row.rank-B{background:var(--tint-green)} .order-row.rank-C{background:var(--tint-orange)}
+    .order-row.rank-D{background:var(--tint-purple)} .order-row.rank-M{background:var(--tint-gray)}
+    .order-id{font-variant-numeric:tabular-nums;font-weight:600}
+    select.status{background:#0b1220;color:var(--text);border:1px solid var(--border);border-radius:10px;
+      padding:8px;width:100%;outline:none}
+    select.status:focus{border-color:var(--accent-2);box-shadow:0 0 0 3px var(--ring)}
+    .icon-btn{background:transparent;border:1px dashed var(--border);color:var(--muted);
+      border-radius:10px;height:36px;cursor:pointer;padding:0 10px}
+    .icon-btn:hover{border-color:#ef4444;color:#ef4444}
+    .icon-btn.alt:hover{border-color:var(--accent-2);color:inherit;box-shadow:none}
+    .icon-btn:disabled{opacity:.45;cursor:not-allowed;border-color:var(--border);color:var(--muted)}
+    footer{max-width:1100px;margin:24px auto;padding:0 20px 60px;color:var(--muted);font-size:.9rem}
+    /* Collapsed state */
+    .location.collapsed .orders{display:none}
+    /* gauge remains visible when collapsed */
+    .location.collapsed .badge{opacity:.85}
+    /* Star rating (half-star accurate) */
+    .rating{--value:0;--star-size:18px;--star-gap:2px;--star-fill:#f5b301;--star-empty:var(--muted);
+      position:relative;display:inline-block;line-height:1;margin-left:8px;cursor:pointer}
+    .rating::after{content:'★★★★★';font-size:var(--star-size);letter-spacing:var(--star-gap);color:var(--star-empty)}
+    .rating::before{content:'★★★★★';font-size:var(--star-size);letter-spacing:var(--star-gap);position:absolute;left:0;top:0;
+      background:linear-gradient(90deg,var(--star-fill) calc((var(--value)/5)*100%),transparent calc((var(--value)/5)*100%));
+      -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+    /* Dialog */
+    dialog{border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--text);padding:16px;max-width:420px}
+    dialog::backdrop{background:rgba(0,0,0,.5)}
+    .field{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+    input[type="text"],select{background:#0b1220;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px}
+    .row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+    .sr-only{position:absolute !important;height:1px;width:1px;overflow:hidden;clip:rect(1px, 1px, 1px, 1px);white-space:nowrap}
+    @media (prefers-reduced-motion: reduce){*{scroll-behavior:auto;transition:none !important;animation:none !important}}
+  
+    /* Golden state when 5★, at capacity, and all S-rank */
+    .location.golden{
+      background: linear-gradient(180deg, rgba(255,215,0,0.11), rgba(255,215,0,0.14));
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px rgba(255,215,0,0.25), 0 14px 36px rgba(255,215,0,0.25);
+    }
+    .location.golden .location-sticky{
+      background: linear-gradient(180deg, rgba(255,215,0,0.18), rgba(255,215,0,0.10));
+      border-bottom-color: var(--gold);
+    }
+    .location.golden .order-row:hover{
+      background: rgba(255,215,0,0.20);
+    }
+
+</style>
+</head>
+<body>
+  <header>
+    <div class="nav">
+      <div class="brand" aria-label="Order Tracker">📦 Order Tracker</div>
+      <div class="spacer"></div>
+      <button class="btn" id="addLocationBtn" aria-label="+ Location">+ Location</button>
+      <button class="btn" id="addOrderBtn" aria-label="+ Order">+ Order</button>
+      <button class="btn" id="backupBtn" aria-label="Export backup">Export</button>
+      <button class="btn" id="restoreBtn" aria-label="Import backup">Import</button>
+      <input id="restoreInput" type="file" accept="application/json" class="sr-only">
+    </div>
+  </header>
+  <main>
+    <div id="locationsContainer"></div>
+    <div class="empty" id="emptyState" hidden>
+      <span class="notice">No locations yet. Use <strong>+ Location</strong> to get started.</span>
+    </div>
+  </main>
+  <footer><div class="notice">Data is stored locally in your browser (localStorage).</div></footer>
+
+  <!-- Add/Edit Order Dialog -->
+  <dialog id="orderDialog">
+    <form method="dialog" id="orderForm">
+      <h3 style="margin:0 0 8px">Add Order</h3>
+      <div class="field">
+        <label for="orderNumber">Order number</label>
+        <input id="orderNumber" name="orderNumber" type="text" autocomplete="off" required>
+      </div>
+      <div class="field">
+        <label for="orderLocation">Location</label>
+        <select id="orderLocation" name="orderLocation" required></select>
+      </div>
+      <div class="row">
+        <button class="btn" value="cancel">Cancel</button>
+        <button class="btn" value="default">Add</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+  (function(){
+    const STORAGE_KEY='orderTrackerData.v2';
+    const uid=()=>Math.random().toString(36).slice(2,10);
+    const $=sel=>document.querySelector(sel);
+
+    // --- Persist (throttled) ---
+    let saveTimer=null;
+    const saveState=(s)=>{
+      window.clearTimeout(saveTimer);
+      saveTimer=window.setTimeout(()=>{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+      }, 60);
+    };
+    const loadState=()=>{
+      try{
+        const raw=localStorage.getItem(STORAGE_KEY) || localStorage.getItem('orderTrackerData.v1');
+        return JSON.parse(raw)||{locations:[]};
+      }catch{ return {locations:[]}; }
+    };
+    let state=loadState();
+
+    // --- Data normalization ---
+    (function normalize(){
+      if(state && Array.isArray(state.locations)){
+        let changed=false;
+        state.locations.forEach(l=>{
+          if(typeof l.collapsed==='undefined'){ l.collapsed=false; changed=true; }
+          if(typeof l.rating!=='number'){ l.rating=0; changed=true; }
+          if(!Array.isArray(l.orders)){ l.orders=[]; changed=true; }
+          if(typeof l.maxOrders==='undefined'){ l.maxOrders=null; changed=true; }
+          if(l.maxOrders!==null){
+            const n = Number(l.maxOrders);
+            l.maxOrders = Number.isFinite(n) && n>=0 ? n : null;
+          }
+        });
+        if(changed) saveState(state);
+      }
+    })();
+
+    // --- DOM refs ---
+    const locationsContainer=$('#locationsContainer');
+    const emptyState=$('#emptyState');
+    const orderDialog=$('#orderDialog');
+    const orderForm=$('#orderForm');
+    const orderNumber=$('#orderNumber');
+    const orderLocation=$('#orderLocation');
+    const restoreInput=$('#restoreInput');
+
+    // --- Helpers ---
+    const escapeHtml=(s)=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const statusValues=['--','S','A','B','C','D','M'];
+    const orderComparator=(a,b)=>{
+      const na=Number(a.number), nb=Number(b.number);
+      if(!Number.isNaN(na) && !Number.isNaN(nb)) return na-nb;
+      if(!Number.isNaN(na)) return -1;
+      if(!Number.isNaN(nb)) return 1;
+      return String(a.number).localeCompare(String(b.number), undefined, {numeric:true, sensitivity:'base'});
+    };
+
+    // --- Rendering ---
+    function render(){
+      locationsContainer.innerHTML='';
+      const hasLoc=state.locations.length>0;
+      emptyState.hidden=hasLoc;
+      if(!hasLoc) return;
+
+      state.locations.forEach((loc, idx)=>{
+        const locEl=document.createElement('section');
+        locEl.className='location';
+        locEl.dataset.locId=loc.id;
+
+        const count=loc.orders.length;
+        locEl.innerHTML=`
+          <div class="location-sticky">
+            <div class="location-header">
+              <div>${escapeHtml(loc.name)}</div>
+              <div class="badge" aria-label="order count">${count}${(typeof loc.maxOrders==='number' && !Number.isNaN(loc.maxOrders))?`/${loc.maxOrders}`:''} Orders</div>
+              <div class="controls">
+                <button class="icon-btn alt edit-location" title="Edit location" aria-label="Edit location">✎</button>
+                <button class="icon-btn alt toggle-collapse" title="Collapse/Expand" aria-label="Collapse/Expand">▾</button>
+                <button class="icon-btn alt move-up" title="Move up" aria-label="Move up">▲</button>
+                <button class="icon-btn alt move-down" title="Move down" aria-label="Move down">▼</button>
+                <button class="icon-btn alt add-order-here" title="Add order here" aria-label="Add order here">+</button>
+                <button class="icon-btn location-remove" title="Remove location" aria-label="Remove location">✕</button>
+              </div>
+            </div>
+            <div class="gauge-wrap"></div>
+          </div>
+          <div class="orders" role="list"></div>
+        `;
+
+        const up=locEl.querySelector('.move-up'),
+              down=locEl.querySelector('.move-down');
+        up.disabled=(idx===0);
+        down.disabled=(idx===state.locations.length-1);
+
+        locEl.classList.toggle('collapsed', !!loc.collapsed);
+        // Golden state: 5★ rating, at maxOrders capacity, and every order is S
+        const hasValidMax = (typeof loc.maxOrders === 'number') && Number.isFinite(loc.maxOrders) && loc.maxOrders >= 0;
+        const isAtMax = hasValidMax && (count === loc.maxOrders);
+        const isFiveStar = Number(loc.rating) >= 5;
+        const allS = (count > 0) && loc.orders.every(o => o.status === 'S');
+        locEl.classList.toggle('golden', isFiveStar && isAtMax && allS);
+
+        const tgl=locEl.querySelector('.toggle-collapse');
+        if(tgl){
+          tgl.textContent = loc.collapsed ? '▸' : '▾';
+          tgl.title = loc.collapsed ? 'Expand' : 'Collapse';
+        }
+
+        // Rating
+        attachRating(locEl, loc);
+
+        // Gauge
+        const gaugeWrap=locEl.querySelector('.gauge-wrap');
+        gaugeWrap.appendChild(buildGauge(loc));
+
+        // Orders
+        const ordersWrap=locEl.querySelector('.orders');
+        [...loc.orders].sort(orderComparator).forEach(order=>{
+          const row=document.createElement('div');
+          row.className='order-row';
+          row.dataset.orderId=order.id;
+          if(order.status && order.status!=='--') row.classList.add(`rank-${order.status}`);
+          row.innerHTML=`
+            <div class="order-id" role="listitem">#${escapeHtml(order.number)}</div>
+            <select class="status" aria-label="Status for order ${escapeHtml(order.number)}">
+              ${statusValues.map(v=>`<option value="${v}"${v===(order.status||'--')?' selected':''}>${v}</option>`).join('')}
+            </select>
+            <button class="icon-btn remove-order" title="Remove order" aria-label="Remove order">✕</button>
+          `;
+          ordersWrap.appendChild(row);
+        });
+
+        locationsContainer.appendChild(locEl);
+      });
+    }
+
+    function buildGauge(loc){
+	  const ranks = ['S','A','B','C','D','M','X'];
+	  const counts = Object.fromEntries(ranks.map(r => [r, 0]));
+
+	  // Count statuses (unset status maps to 'X')
+	  for (const o of loc.orders) {
+		const key = (o.status && o.status !== '--') ? o.status : 'X';
+		counts[key]++;
+	  }
+
+	  const actualTotal = Object.values(counts).reduce((a,b) => a + b, 0);
+	  // Capacity is maxOrders when valid; otherwise fall back to actualTotal
+	  const hasValidMax = (typeof loc.maxOrders === 'number') && Number.isFinite(loc.maxOrders) && loc.maxOrders >= 0;
+	  const capacity = hasValidMax ? loc.maxOrders : actualTotal;
+
+	  // Denominator: never smaller than the number of orders so widths don't exceed 100%
+	  const denom = Math.max(capacity, actualTotal);
+	  const wrap = document.createElement('div');
+	  wrap.className = 'gauge';
+
+	  if (denom === 0) return wrap; // nothing to show
+
+	  for (const r of ranks) {
+		const c = counts[r];
+		if (!c) continue;
+		const seg = document.createElement('div');
+		seg.className = `gauge-seg seg-${r}`;
+		seg.style.width = `${(c / denom) * 100}%`;
+		seg.title = `${r === 'X' ? '--' : r}: ${c} of ${denom}`;
+		wrap.appendChild(seg);
+	  }
+	  
+	  return wrap;
+	}
+
+
+    // --- Actions ---
+    function addLocation(name, maxOrders){
+      const t=(name||'').trim();
+      if(!t) return;
+      if(state.locations.some(l=>l.name.toLowerCase()===t.toLowerCase())) return alert('That location already exists.');
+      const m = (typeof maxOrders==='number' && Number.isFinite(maxOrders) && maxOrders>=0) ? maxOrders : null;
+      state.locations.push({id:uid(),name:t,orders:[],collapsed:false,rating:0,maxOrders:m});
+      saveState(state); render();
+    }
+    
+    function parseNumberRange(text){
+      // Supports "100-105" (inclusive). Returns array of strings.
+      const t = String(text).trim();
+      const m = t.match(/^(-?\d+)\s*-\s*(-?\d+)$/);
+      if(!m) return null;
+      const start = Number(m[1]);
+      const end = Number(m[2]);
+      if(!Number.isFinite(start) || !Number.isFinite(end)) return null;
+      const step = start <= end ? 1 : -1;
+      const out = [];
+      for(let v = start; step>0 ? v<=end : v>=end; v+=step){ out.push(String(v)); }
+      return out;
+    }
+
+    function addOrders(text, locId){
+      const loc = state.locations.find(l=>l.id===locId);
+      if(!loc) return alert('Location not found.');
+      // Determine list of order numbers to add
+      const range = parseNumberRange(text);
+      const list = range ? range : [String(text).trim()];
+      // Enforce maxOrders
+      let added = 0, skipped = 0;
+      for(const num of list){
+        const atMax = (typeof loc.maxOrders==='number' && Number.isFinite(loc.maxOrders) && loc.maxOrders>=0 && loc.orders.length >= loc.maxOrders);
+        if(atMax){ skipped += 1; continue; }
+        loc.orders.push({id:uid(), number:String(num), status:'--'});
+        added += 1;
+      }
+      saveState(state); render();
+      if(skipped>0){
+        alert(`Added ${added} order${added===1?'':'s'}. Skipped ${skipped} due to max capacity${typeof loc.maxOrders==='number' ? ' ('+loc.maxOrders+')' : ''}.`);
+      }
+    }
+    function addOrder(num, locId){
+      const loc=state.locations.find(l=>l.id===locId);
+      if(!loc) return alert('Location not found.');
+      const atMax = (typeof loc.maxOrders==='number' && Number.isFinite(loc.maxOrders) && loc.maxOrders>=0 && loc.orders.length >= loc.maxOrders);
+      if(atMax){ alert(`'${loc.name}' is at its max of ${loc.maxOrders} orders.`); return; }
+      loc.orders.push({id:uid(),number:String(num).trim(),status:'--'});
+      saveState(state); render();
+    }
+    function updateOrderStatus(lid, oid, status){
+      const loc=state.locations.find(l=>l.id===lid); if(!loc) return;
+      const ord=loc.orders.find(o=>o.id===oid); if(!ord) return;
+      ord.status=status; saveState(state); render();
+    }
+    function removeOrder(lid, oid){
+      const loc=state.locations.find(l=>l.id===lid); if(!loc) return;
+      loc.orders=loc.orders.filter(o=>o.id!==oid); saveState(state); render();
+    }
+    function removeLocation(lid){
+      state.locations=state.locations.filter(l=>l.id!==lid); saveState(state); render();
+    }
+    function moveLocation(lid, d){
+      const i=state.locations.findIndex(l=>l.id===lid), j=i+d;
+      if(j<0 || j>=state.locations.length) return;
+      const [it]=state.locations.splice(i,1);
+      state.locations.splice(j,0,it);
+      saveState(state); render();
+    }
+    function toggleLocationCollapse(lid){
+      const loc=state.locations.find(l=>l.id===lid);
+      if(!loc) return; loc.collapsed=!loc.collapsed; saveState(state); render();
+    }
+
+    // --- Rating widget ---
+    function attachRating(locEl, loc){
+      const badge = locEl.querySelector('.badge');
+      const ref = badge || locEl.querySelector('.location-header > div');
+      const ratingEl = document.createElement('span');
+      ratingEl.className = 'rating';
+      const setVal = (v)=>{ ratingEl.style.setProperty('--value', v); };
+      const getValFromEvent = (evt)=>{
+        const rect = ratingEl.getBoundingClientRect();
+        const x = Math.min(Math.max((evt.clientX ?? 0) - rect.left, 0), rect.width);
+        let val = (x / rect.width) * 5;
+        val = Math.round(val * 2) / 2;
+        return val;
+      };
+      setVal(typeof loc.rating==='number' ? loc.rating : 0);
+      if(ref){ ref.insertAdjacentElement('afterend', ratingEl); }
+      ratingEl.title = 'Rating: ' + (loc.rating||0).toFixed(1) + '/5';
+
+      ratingEl.addEventListener('mousemove', (e)=>{ setVal(getValFromEvent(e)); }, {passive:true});
+      ratingEl.addEventListener('mouseleave', ()=>{ setVal(typeof loc.rating==='number' ? loc.rating : 0); }, {passive:true});
+      ratingEl.addEventListener('click', (e)=>{
+        const v = getValFromEvent(e);
+        loc.rating = v;
+        saveState(state);
+        setVal(v);
+        ratingEl.title = 'Rating: ' + v.toFixed(1) + '/5';
+      });
+      // Touch support
+      ratingEl.addEventListener('touchmove', (e)=>{
+        if(!e.touches || !e.touches[0]) return;
+        const t=e.touches[0];
+        const fake={clientX:t.clientX};
+        setVal(getValFromEvent(fake));
+      }, {passive:true});
+      ratingEl.addEventListener('touchend', (e)=>{
+        const t = (e.changedTouches||[])[0];
+        if(!t) return;
+        const fake={clientX:t.clientX};
+        const v=getValFromEvent(fake);
+        loc.rating=v; saveState(state); setVal(v);
+        ratingEl.title = 'Rating: ' + v.toFixed(1) + '/5';
+      }, {passive:true});
+    }
+
+    // --- Header actions ---
+    $('#addLocationBtn').addEventListener('click', ()=>{
+      const name = prompt('Location name?');
+      if(!name) return;
+      let maxStr = prompt('Max order count for this location? (Leave blank for no limit)');
+      if(maxStr!==null) maxStr = maxStr.trim();
+      const maxNum = maxStr ? Number(maxStr) : null;
+      addLocation(name, (Number.isFinite(maxNum) && maxNum>=0) ? maxNum : null);
+    });
+
+    function openOrderDialog(targetLocId){
+      // populate locations
+      orderLocation.innerHTML = state.locations.map(l=>{
+        const full = (typeof l.maxOrders==='number' && Number.isFinite(l.maxOrders) && l.maxOrders>=0 && l.orders.length >= l.maxOrders);
+        const name = escapeHtml(l.name) + (full ? ' (FULL)' : '');
+        return `<option value="${l.id}" ${targetLocId===l.id?'selected':''}>${name}</option>`;
+      }).join('');
+      orderNumber.value='';
+      orderNumber.placeholder='Enter number or range (e.g., 100-105)';
+      orderDialog.showModal();
+      setTimeout(()=>orderNumber.focus(), 0);
+      orderDialog.onclose = ()=>{};
+      orderForm.onsubmit = (e)=>{
+        e.preventDefault();
+        const text=orderNumber.value.trim();
+        const lid=orderLocation.value;
+        if(!text) return;
+        addOrders(text, lid);
+        orderDialog.close();
+      };
+    }
+
+    $('#addOrderBtn').addEventListener('click', ()=>{
+      if(state.locations.length===0){ alert('Add a location first.'); return; }
+      openOrderDialog(state.locations[0].id);
+    });
+
+    // Export / Import
+    $('#backupBtn').addEventListener('click', ()=>{
+      const blob=new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download='order-tracker-backup.json'; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url), 0);
+    });
+    $('#restoreBtn').addEventListener('click', ()=> restoreInput.click());
+    restoreInput.addEventListener('change', async (e)=>{
+      const file=e.target.files && e.target.files[0];
+      if(!file) return;
+      try{
+        const text=await file.text();
+        const data=JSON.parse(text);
+        if(!data || !Array.isArray(data.locations)) throw new Error('Invalid file');
+        state=data; saveState(state); render();
+      }catch(err){
+        alert('Import failed: ' + (err.message||err));
+      }finally{
+        restoreInput.value='';
+      }
+    });
+
+    // --- Delegated events (single listener) ---
+    locationsContainer.addEventListener('click', (e)=>{
+      const btn=e.target.closest('button');
+      if(!btn) return;
+      const locEl=e.target.closest('.location');
+      if(!locEl) return;
+      const lid=locEl.dataset.locId;
+      if(btn.classList.contains('move-up')) return moveLocation(lid,-1);
+      if(btn.classList.contains('move-down')) return moveLocation(lid,1);
+      if(btn.classList.contains('toggle-collapse')) return toggleLocationCollapse(lid);
+      if(btn.classList.contains('add-order-here')) return openOrderDialog(lid);
+      if(btn.classList.contains('edit-location')){
+        const loc = state.locations.find(l=>l.id===lid);
+        if(!loc) return;
+        const newName = prompt('Edit location name:', loc.name);
+        if(newName===null) return; // cancelled
+        let maxStr = prompt('Set max order count (blank for no limit):', (loc.maxOrders??'').toString());
+        if(maxStr!==null) maxStr = maxStr.trim();
+        const maxNum = maxStr ? Number(maxStr) : null;
+        loc.name = newName.trim() || loc.name;
+        loc.maxOrders = (Number.isFinite(maxNum) && maxNum>=0) ? maxNum : null;
+        saveState(state); render();
+        return;
+      }
+      if(btn.classList.contains('location-remove')){
+        const loc = state.locations.find(l=>l.id===lid);
+        if(confirm(`Remove location "${loc?.name||''}"?`)) removeLocation(lid);
+        return;
+      }
+      if(btn.classList.contains('remove-order')){
+        const row=btn.closest('.order-row');
+        const oid=row?.dataset.orderId;
+        const ordNum=row?.querySelector('.order-id')?.textContent?.trim()||'';
+        if(oid && confirm(`Remove ${ordNum}?`)) removeOrder(lid, oid);
+        return;
+      }
+    });
+
+    locationsContainer.addEventListener('change', (e)=>{
+      const sel=e.target.closest('select.status');
+      if(!sel) return;
+      const locEl=e.target.closest('.location');
+      const row=e.target.closest('.order-row');
+      if(!locEl || !row) return;
+      updateOrderStatus(locEl.dataset.locId, row.dataset.orderId, sel.value||'--');
+    }, {passive:true});
+
+    // --- Layout helpers ---
+    function setStickyOffset(){
+      const h=document.querySelector('header').offsetHeight||0;
+      document.documentElement.style.setProperty('--sticky-offset', (h+8)+'px');
+    }
+    window.addEventListener('resize', setStickyOffset, {passive:true});
+
+    // Initial render
+    setStickyOffset();
+    render();
+  })();
+  </script>
+</body>
+</html>
