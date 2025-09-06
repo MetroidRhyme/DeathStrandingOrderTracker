@@ -13,7 +13,24 @@
       --tint-blue:rgba(59,130,246,0.12);--tint-green:rgba(34,197,94,0.12);
       --tint-orange:rgba(249,115,22,0.12);--tint-purple:rgba(139,92,246,0.12);
       --tint-gray:rgba(156,163,175,0.12);--sticky-offset:56px;
-    }
+	  --header-h: 56px;
+	  --sticky-offset: calc(var(--header-h) + 8px);
+	}
+	
+	/* put page content below the fixed header */
+	html, body { height: 100%; padding-top: var(--header-h); }
+
+	/* make in-page anchors account for the fixed header */
+	html { scroll-padding-top: var(--header-h); }
+	section, .location, [id] { scroll-margin-top: var(--header-h); }
+
+	/* the sticky bar for each open location */
+	.location-sticky{
+	  position: sticky;
+	  top: var(--sticky-offset);   /* was top: var(--sticky-offset) but the var wasn’t accurate */
+	  z-index: 5;
+	}
+	
     *{box-sizing:border-box}
     html,body{height:100%;
 	  padding-top: var(--sticky-offset);
@@ -573,9 +590,20 @@ section, .location, [id] { scroll-margin-top: var(--sticky-offset); }
 
     // --- Layout helpers ---
     function setStickyOffset(){
-      const h=document.querySelector('header').offsetHeight||0;
-      document.documentElement.style.setProperty('--sticky-offset', (h-30)+'px');
-    }
+	  const header = document.querySelector('header');
+	  const h = header?.getBoundingClientRect().height || 56; // px
+	  const spacing = 8; // px below the header so the sticky bar never hides behind it
+	  document.documentElement.style.setProperty('--header-h', `${h}px`);
+	  document.documentElement.style.setProperty('--sticky-offset', `calc(${h}px + ${spacing}px)`);
+	}
+
+	// keep your existing resize listener, and add this for dynamic header changes:
+	const header = document.querySelector('header');
+	if (window.ResizeObserver && header) {
+	  const ro = new ResizeObserver(() => setStickyOffset());
+	  ro.observe(header);
+	}
+
     window.addEventListener('resize', setStickyOffset, {passive:true});
 
     // Initial render
