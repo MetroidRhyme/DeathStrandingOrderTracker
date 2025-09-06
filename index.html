@@ -15,7 +15,9 @@
       --tint-gray:rgba(156,163,175,0.12);--sticky-offset:56px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
+    html,body{height:100%;
+	  padding-top: var(--sticky-offset);
+	}
     body {
 	  margin: 0;
 	  background:
@@ -28,7 +30,7 @@
 			"Apple Color Emoji", "Segoe UI Emoji";
 	}
 
-    header{position:sticky;top:0;z-index:10;backdrop-filter:blur(6px);
+    header{position:fixed;top:0;left:0;right:0;z-index:1000;backdrop-filter:blur(6px);
       background:linear-gradient(180deg,rgba(15,23,42,0.9),rgba(15,23,42,0.7));
       border-bottom:1px solid var(--border)}
     .nav{max-width:1100px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:12px}
@@ -112,6 +114,19 @@
     .location.golden .order-row:hover{
       background: rgba(255,215,0,0.20);
     }
+	.location.golden .icon-btn {
+	  border-color: rgba(255,215,0,0.75);
+	}
+	.location.golden .icon-btn:hover {
+	  border-color: #facc15; /* slightly brighter gold */
+	  color: #facc15;
+	}
+
+
+/* --- Fixed header offset helpers --- */
+html { scroll-padding-top: var(--sticky-offset); }
+section, .location, [id] { scroll-margin-top: var(--sticky-offset); }
+/* ----------------------------------- */
 
 </style>
 </head>
@@ -559,7 +574,7 @@
     // --- Layout helpers ---
     function setStickyOffset(){
       const h=document.querySelector('header').offsetHeight||0;
-      document.documentElement.style.setProperty('--sticky-offset', (h+8)+'px');
+      document.documentElement.style.setProperty('--sticky-offset', (h-30)+'px');
     }
     window.addEventListener('resize', setStickyOffset, {passive:true});
 
